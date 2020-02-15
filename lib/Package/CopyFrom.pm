@@ -10,25 +10,10 @@ use strict 'subs', 'vars';
 use warnings;
 use Log::ger;
 
-require Exporter;
-our @ISA = qw(Exporter);
+use Package::Stash;
+
+use Exporter qw(import);
 our @EXPORT = qw(copy_from);
-
-sub _list_pkg_contents {
-    my $pkg = shift;
-
-    my %contents;
-    my $symtbl = \%{"$pkg\::"};
-    for my $key (keys %$symtbl) {
-        my $val = $symtbl->{$key};
-        $contents{$key} = 1 if ref $val eq 'CODE' || # perl >= 5.22
-            defined *$val{CODE};
-        $contents{"\$$key"} = 1 if defined *$val{SCALAR};
-        $contents{"\@$key"} = 1 if defined *$val{ARRAY};
-        $contents{"\%$key"} = 1 if defined *$val{HASH};
-    }
-    %contents;
-}
 
 sub copy_from {
     my $opts = ref $_[0] eq 'HASH' ? shift : {};
@@ -43,11 +28,24 @@ sub copy_from {
     if ($opts->{load}) {
         require $src_pkg_pm unless $INC{$src_pkg_pm};
     }
-    my %src_contents = _list_pkg_contents($src_pkg);
+    my %src_contents;
+    {
+        my $stash = Package::Stash->new($src_pkg);
+        for ($stash->list_all_symbols('CODE'))   { $src_contents{$_}     = 1 }
+        for ($stash->list_all_symbols('SCALAR')) { $src_contents{"\$$_"} = 1 }
+        for ($stash->list_all_symbols('ARRAY'))  { $src_contents{"\@$_"} = 1 }
+        for ($stash->list_all_symbols('HASH'))   { $src_contents{"\%$_"} = 1 }
+    }
 
     my $target_pkg = caller;
-    log_warn "target_pkg=<$target_pkg>";
-    my %target_contents = _list_pkg_contents($target_pkg);
+    my %target_contents;
+    {
+        my $stash = Package::Stash->new($target_pkg);
+        for ($stash->list_all_symbols('CODE'))   { $target_contents{$_}     = 1 }
+        for ($stash->list_all_symbols('SCALAR')) { $target_contents{"\$$_"} = 1 }
+        for ($stash->list_all_symbols('ARRAY'))  { $target_contents{"\@$_"} = 1 }
+        for ($stash->list_all_symbols('HASH'))   { $target_contents{"\%$_"} = 1 }
+    }
 
     for my $name (sort keys %src_contents) {
         if ($name =~ /\A\$/ && $opts->{skip_scalar}) {
