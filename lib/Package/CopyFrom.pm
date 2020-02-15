@@ -21,6 +21,7 @@ sub _list_pkg_contents {
     my $symtbl = \%{"$pkg\::"};
     for my $key (keys %$symtbl) {
         my $val = $symtbl->{$key};
+        #print "key=$key, val=$val, ref val=", ref($val), "\n";
         $contents{$key} = 1 if ref $val eq 'CODE' || # perl >= 5.22
             defined *$val{CODE};
         $contents{"\$$key"} = 1 if defined *$val{SCALAR};
@@ -46,7 +47,6 @@ sub copy_from {
     my %src_contents = _list_pkg_contents($src_pkg);
 
     my $target_pkg = caller;
-    log_warn "target_pkg=<$target_pkg>";
     my %target_contents = _list_pkg_contents($target_pkg);
 
     for my $name (sort keys %src_contents) {
@@ -131,9 +131,11 @@ Options:
 
 =item * overwrite
 
-Boolean, default false. By default, if a symbol (variable/subroutine) already
-exists in the target package, it will not be overwritten. Setting this option to
-true will overwrite.
+Boolean, default false. When this setting is false, if a symbol
+(variable/subroutine) already exists in the target package, it will not be
+overwritten. Setting this option to true will overwrite.
+
+See L</GOTCHAS>.
 
 =item * load
 
@@ -172,8 +174,29 @@ are done. If this option is true, L<Storable>'s C<dclone> is used.
 =back
 
 
+=head1 GOTCHAS
+
+During parsing (compile-time), whenever a variable is mentioned (even if the
+corresponding statement never gets executed) it will spring into existence. If
+you do C<copy_from> during run-time, you will miss copying the mentioned
+variable unintendedly. Consider this example:
+
+ # in lib/Cwd2.pm
+ package Cwd2;
+ use Package::CopyFrom;
+ copy_from 'Cwd';
+
+ # in main.pl
+ require Cwd2;
+
+ say @Cwd2::EXPORT if 0;
+
+ # Cwd2's @EXPORT will not be copied from Cwd's @EXPORT because Cwd2's @EXPORT
+ # springs into existence during compile-time due to the above statement.
+
+
 =head1 SEE ALSO
 
-L<Package::Rename>
+L<Package::Rename> can also copy packages.
 
 =cut
