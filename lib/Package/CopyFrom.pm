@@ -78,12 +78,16 @@ sub copy_from {
 
         log_trace "Copying $name from $src_pkg to $target_pkg ...";
         if ($name =~ /\A\$(.+)/) {
+            no warnings 'once', 'redefine';
             ${"$target_pkg\::$1"} = ${"$src_pkg\::$1"};
         } elsif ($name =~ /\A\@(.+)/) {
+            no warnings 'once', 'redefine';
             @{"$target_pkg\::$1"} = $opts->{dclone} ? @{ Storable::dclone(\@{"$src_pkg\::$1"}) } : @{"$src_pkg\::$1"};
         } elsif ($name =~ /\A\%(.+)/) {
+            no warnings 'once', 'redefine';
             %{"$target_pkg\::$1"} = $opts->{dclone} ? %{ Storable::dclone(\@{"$src_pkg\::$1"}) } : %{"$src_pkg\::$1"};
         } else {
+            no warnings 'once', 'redefine';
             *{"$target_pkg\::$name"} = \&{"$src_pkg\::$name"};
         }
     }
