@@ -24,6 +24,11 @@ package Package::CopyFrom::Test::Copy_NotLoad;
 use Package::CopyFrom;
 copy_from {load=>0}, 'Package::CopyFrom::Test::Copy';
 
+package Package::CopyFrom::Test::Copy_To;
+use Package::CopyFrom;
+copy_from {to=>'Package::CopyFrom::Test::Copy_ToTarget'},
+    'Package::CopyFrom::Test';
+
 package Package::CopyFrom::Test::Copy_Clone;
 use Package::CopyFrom;
 copy_from {dclone=>1}, 'Package::CopyFrom::Test';
@@ -76,6 +81,18 @@ subtest "basics" => sub {
     is_deeply(  Package::CopyFrom::Test::Copy_Modify::func1(1), "notcopied 1");
     is_deeply(  Package::CopyFrom::Test::Copy_Modify::func2(1), "from test 2: 1");
     is_deeply(  Package::CopyFrom::Test::Copy_Modify::func3(1), "from test 3: 1");
+};
+
+subtest "opt:to" => sub {
+    is_deeply( $Package::CopyFrom::Test::Copy_ToTarget::SCALAR1 , "test1");
+    is_deeply( $Package::CopyFrom::Test::Copy_ToTarget::SCALAR2 , "test2");
+    is_deeply(\@Package::CopyFrom::Test::Copy_ToTarget::ARRAY1  , ["elem1","elem2"]);
+    is_deeply(\@Package::CopyFrom::Test::Copy_ToTarget::ARRAY2  , ["elem3","elem4"]);
+    is_deeply(\%Package::CopyFrom::Test::Copy_ToTarget::HASH1   , {key1=>1,key2=>[2]});
+    is_deeply(\%Package::CopyFrom::Test::Copy_ToTarget::HASH2   , {key3=>3,key4=>4});
+    is_deeply(  Package::CopyFrom::Test::Copy_ToTarget::func1(1), "from test 1: 1");
+    is_deeply(  Package::CopyFrom::Test::Copy_ToTarget::func2(1), "from test 2: 1");
+    is_deeply(  Package::CopyFrom::Test::Copy_ToTarget::func3(1), "from test 3: 1");
 };
 
 subtest "opt:load=0" => sub {

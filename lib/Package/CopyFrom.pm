@@ -47,7 +47,8 @@ sub copy_from {
     }
     my %src_contents = _list_pkg_contents($src_pkg);
 
-    my $target_pkg = caller;
+    my $target_pkg = $opts->{to};
+    $target_pkg = caller unless defined $target_pkg;
     my %target_contents = _list_pkg_contents($target_pkg);
 
   NAME:
