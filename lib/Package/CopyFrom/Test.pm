@@ -5,20 +5,23 @@ package Package::CopyFrom::Test;
 # DIST
 # VERSION
 
-our $FOO = "foo";
-our $BAR = "bar";
-our @FOO = ("foo", "FOO");
-our @BAR = ("bar", "BAR");
-our %FOO = (foo=>1, FOO=>2);
-our %BAR = (bar=>1, BAR=>2);
+our $SCALAR1 = "test1";
+our $SCALAR2 = "test2";
+our @ARRAY1  = ("elem1", "elem2");
+our @ARRAY2  = ("elem3", "elem4");
+our %HASH1   = (key1=>1, key2=>[2]);
+our %HASH2   = (key3=>3, key4=>4);
 
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(f1);
-our %EXPORT_TAGS = (T1 => [qw/f1 f2/], T2 => [qw/f2 f3/]);
+our @EXPORT_OK = qw(func1);
+our %EXPORT_TAGS = (
+    T1 => [qw/func1 func2/],
+    T2 => [qw/func2 func3/],
+);
 
-sub f1 { return $_[0]**2 }
-sub f2 { return $_[0]**3 }
-sub f3 {}
+sub func1 { return "from test 1: $_[0]" }
+sub func2 { return "from test 2: $_[0]" }
+sub func3 { return "from test 3: $_[0]" }
 
 1;
 
