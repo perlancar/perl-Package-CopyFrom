@@ -9,8 +9,8 @@
 
 	- Add option 'to'.
 
-	- Add (undocumented) hook options: _on_skip, _before_copy,
-	  _after_copy.
+	- [internal] Add (undocumented) hook options for internal purposes:
+	  _on_skip, _before_copy, _after_copy.
 
         - [bugfix] Forgot to implement skip_sub.
 
