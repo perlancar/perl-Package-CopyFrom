@@ -58,6 +58,10 @@ use Package::CopyFrom;
 our $COUNTER = 0;
 copy_from {_after_copy=>sub {$COUNTER++}}, 'Package::CopyFrom::Test';
 
+package Package::CopyFrom::Test::Copy_BeforeCopy;
+use Package::CopyFrom;
+copy_from {_before_copy=>sub {my $name = shift; return 1 if $name =~ /SCALAR1|ARRAY1|HASH2|func3/; 0}}, 'Package::CopyFrom::Test';
+
 package main;
 no warnings 'once';
 
@@ -163,6 +167,18 @@ subtest "opt:exclude" => sub {
 
 subtest "opt:_after_copy" => sub {
     ok($Package::CopyFrom::Test::Copy_AfterCopy::COUNTER > 9);
+};
+
+subtest "opt:_before_copy" => sub {
+    is_deeply( $Package::CopyFrom::Test::Copy_BeforeCopy::SCALAR1 , undef);
+    is_deeply( $Package::CopyFrom::Test::Copy_BeforeCopy::SCALAR2 , "test2");
+    is_deeply(\@Package::CopyFrom::Test::Copy_BeforeCopy::ARRAY1  , []);
+    is_deeply(\@Package::CopyFrom::Test::Copy_BeforeCopy::ARRAY2  , ["elem3","elem4"]);
+    is_deeply(\%Package::CopyFrom::Test::Copy_BeforeCopy::HASH1   , {key1=>1,key2=>[2]});
+    is_deeply(\%Package::CopyFrom::Test::Copy_BeforeCopy::HASH2   , {});
+    is_deeply(  Package::CopyFrom::Test::Copy_BeforeCopy::func1(1), "from test 1: 1");
+    is_deeply(  Package::CopyFrom::Test::Copy_BeforeCopy::func2(1), "from test 2: 1");
+    ok(!defined &{"Package::CopyFrom::Test::Copy_BeforeCopy::func3"});
 };
 
 # XXX test opt:_before_copy

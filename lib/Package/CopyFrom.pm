@@ -92,7 +92,11 @@ sub copy_from {
 
         log_trace "Copying $name from $src_pkg to $target_pkg ...";
         if ($opts->{_before_copy}) {
-            $opts->{_before_copy}->($name, $src_pkg, $target_pkg, $opts, $overwrite);
+            $skip = $opts->{_before_copy}->($name, $src_pkg, $target_pkg, $opts, $overwrite);
+        }
+        if ($skip) {
+            log_trace "Not copying $name from $src_pkg to $target_pkg (_before_copy)";
+            next NAME;
         }
         if ($name =~ /\A\$(.+)/) {
             no warnings 'once', 'redefine';
@@ -155,6 +159,11 @@ scalars, arrays, and hashes are copied.
 Options:
 
 =over
+
+=item * to
+
+String. Default to C<copy_from>'s caller package. Can be used to explicitly set
+the target package.
 
 =item * load
 

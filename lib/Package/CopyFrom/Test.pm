@@ -25,6 +25,6 @@ sub func3 { return "from test 3: $_[0]" }
 
 1;
 
-# ABTRACT: A dummy module for testing
+# ABSTRACT: A dummy module for testing
 
 =for Pod::Coverage ^(.+)$
