@@ -75,6 +75,16 @@ sub copy_from {
             $skip++; goto SKIPPING;
         }
 
+        my $overwrite = exists $target_contents{$name} ? 1:0;
+
+        if ($opts->{_before_copy}) {
+            $skip = 1 if $opts->{_before_copy}->($name, $src_pkg, $target_pkg, $opts, $overwrite);
+        }
+        if ($skip) {
+            log_trace "Not copying $name from $src_pkg to $target_pkg (_before_copy)";
+            next NAME;
+        }
+
       SKIPPING:
         {
             last unless $skip;
@@ -84,20 +94,12 @@ sub copy_from {
             next NAME;
         }
 
-        my $overwrite = 0;
-        if (exists $target_contents{$name}) {
-            log_trace "Warning: overwriting $name from $src_pkg to $target_pkg";
-            $overwrite++;
+        if ($overwrite) {
+            log_trace "Overwriting $name from $src_pkg to $target_pkg";
+        } else {
+            log_trace "Copying $name from $src_pkg to $target_pkg ...";
         }
 
-        log_trace "Copying $name from $src_pkg to $target_pkg ...";
-        if ($opts->{_before_copy}) {
-            $skip = $opts->{_before_copy}->($name, $src_pkg, $target_pkg, $opts, $overwrite);
-        }
-        if ($skip) {
-            log_trace "Not copying $name from $src_pkg to $target_pkg (_before_copy)";
-            next NAME;
-        }
         if ($name =~ /\A\$(.+)/) {
             no warnings 'once', 'redefine';
             ${"$target_pkg\::$1"} = ${"$src_pkg\::$1"};

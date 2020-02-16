@@ -181,7 +181,6 @@ subtest "opt:_before_copy" => sub {
     ok(!defined &{"Package::CopyFrom::Test::Copy_BeforeCopy::func3"});
 };
 
-# XXX test opt:_before_copy
 # XXX test opt:_on_skip
 
 DONE_TESTING:
