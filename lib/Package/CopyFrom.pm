@@ -50,33 +50,49 @@ sub copy_from {
     my $target_pkg = caller;
     my %target_contents = _list_pkg_contents($target_pkg);
 
+  NAME:
     for my $name (sort keys %src_contents) {
+        my $skip;
         if ($name =~ /\A\$/ && $opts->{skip_scalar}) {
             log_trace "Not copying $name from $src_pkg to $target_pkg (skip_scalar=1)";
-            next;
+            $skip++; goto SKIPPING;
         }
         if ($name =~ /\A\@/ && $opts->{skip_array}) {
             log_trace "Not copying $name from $src_pkg to $target_pkg (skip_array=1)";
-            next;
+            $skip++; goto SKIPPING;
         }
         if ($name =~ /\A\%/ && $opts->{skip_hash}) {
             log_trace "Not copying $name from $src_pkg to $target_pkg (skip_hash=1)";
-            next;
+            $skip++; goto SKIPPING;
         }
         if ($name !~ /\A[\$\@\%]/ && $opts->{skip_sub}) {
             log_trace "Not copying $name from $src_pkg to $target_pkg (skip_sub=1)";
-            next;
+            $skip++; goto SKIPPING;
         }
         if ($opts->{exclude} && grep { $name eq $_ } @{ $opts->{exclude} }) {
             log_trace "Not copying $name from $src_pkg to $target_pkg (listed in exclude)";
-            next;
+            $skip++; goto SKIPPING;
         }
 
+      SKIPPING:
+        {
+            last unless $skip;
+            if ($opts->{_on_skip}) {
+                $opts->{_on_skip}->($name, $src_pkg, $target_pkg, $opts);
+            }
+            next NAME;
+        }
+
+        my $overwrite = 0;
         if (exists $target_contents{$name}) {
             log_trace "Warning: overwriting $name from $src_pkg to $target_pkg";
+            $overwrite++;
         }
 
         log_trace "Copying $name from $src_pkg to $target_pkg ...";
+        if ($opts->{_before_copy}) {
+            $opts->{_before_copy}->($name, $src_pkg, $target_pkg, $opts, $overwrite);
+        }
         if ($name =~ /\A\$(.+)/) {
             no warnings 'once', 'redefine';
             ${"$target_pkg\::$1"} = ${"$src_pkg\::$1"};
@@ -89,6 +105,9 @@ sub copy_from {
         } else {
             no warnings 'once', 'redefine';
             *{"$target_pkg\::$name"} = \&{"$src_pkg\::$name"};
+        }
+        if ($opts->{_after_copy}) {
+            $opts->{_after_copy}->($name, $src_pkg, $target_pkg, $opts, $overwrite);
         }
     }
 }
